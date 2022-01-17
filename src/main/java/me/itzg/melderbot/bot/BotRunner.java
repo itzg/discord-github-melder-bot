@@ -25,11 +25,11 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class BotRunner implements ApplicationRunner, Closeable {
 
-    protected static final String MELD = "meld";
     protected static final String LINK_WITH_GITHUB = "link-with-github";
     private final AppProperties appProperties;
     private final DiscordClient discordClient;
     private final MeldLinkService meldLinkService;
+    private final String topLevelCommand;
     private Disposable botSubscription;
 
     public BotRunner(AppProperties appProperties,
@@ -39,6 +39,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
         this.appProperties = appProperties;
         this.discordClient = discordClient;
         this.meldLinkService = meldLinkService;
+        this.topLevelCommand = appProperties.getTopLevelCommand();
     }
 
     @Override
@@ -48,12 +49,13 @@ public class BotRunner implements ApplicationRunner, Closeable {
                 .then(
                     discordClient.login()
                         .flatMapMany(gateway -> gateway.on(ApplicationCommandInteractionEvent.class))
-                        .switchMap(appCommandEvent ->
-                            switch (appCommandEvent.getCommandName()) {
-                                case MELD -> handleMeld(appCommandEvent);
-                                default -> Mono.error(new IllegalArgumentException("Unknown command"));
+                        .switchMap(appCommandEvent -> {
+                            if (appCommandEvent.getCommandName().equals(topLevelCommand)) {
+                                return handleMeld(appCommandEvent);
+                            } else {
+                                return Mono.error(new IllegalArgumentException("Unknown command"));
                             }
-                        )
+                        })
                         .onErrorContinue((throwable, appCommandEvent) -> {
                             log.warn("Failed to process command interaction event={}", appCommandEvent, throwable);
                         })
@@ -69,7 +71,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
                 .createGlobalApplicationCommand(
                     appProperties.getDiscordApplicationId(),
                     ApplicationCommandRequest.builder()
-                        .name(MELD)
+                        .name(topLevelCommand)
                         // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types
                         .type(1)
                         .description("Melds Discord users with Github users")
@@ -79,14 +81,17 @@ public class BotRunner implements ApplicationRunner, Closeable {
                             .description("Links your Discord user to a Github user")
                             .build())
                         .build()
-                ),
+                )
+                .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData))
+            ,
             applicationService.getGlobalApplicationCommands(appProperties.getDiscordApplicationId())
                 .flatMap(applicationCommandData -> {
-                    if (!applicationCommandData.name().equals(MELD)) {
+                    if (!applicationCommandData.name().equals(topLevelCommand)) {
                         return applicationService.deleteGlobalApplicationCommand(
                             appProperties.getDiscordApplicationId(),
                             Long.parseLong(applicationCommandData.id())
-                        );
+                        )
+                            .doOnNext(unused -> log.debug("Deleted old command: {}", applicationCommandData));
                     } else {
                         return Mono.empty();
                     }
@@ -96,7 +101,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
     }
 
     private Publisher<?> handleMeld(ApplicationCommandInteractionEvent appCommandEvent) {
-        log.debug("Handling {} command from {}", MELD, appCommandEvent.getInteraction().getUser().getUsername());
+        log.debug("Handling {} command from {}", topLevelCommand, appCommandEvent.getInteraction().getUser().getUsername());
 
         final Possible<ApplicationCommandInteractionData> possibleData = appCommandEvent.getInteraction()
             .getData().data();

@@ -18,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 @Data
 @Validated
 public class AppProperties {
+
     @NotBlank
     String discordBotToken;
 
@@ -54,5 +55,11 @@ public class AppProperties {
      * https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
      */
     String githubWebhookSecret;
+
+    /**
+     * This is intended to only be changed for testing
+     */
+    @NotBlank
+    String topLevelCommand = "meld";
 
 }

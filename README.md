@@ -4,6 +4,14 @@ This is a Discord bot that provides an application command for Discord users to 
 
 ## [Create Discord application](https://discord.com/developers/applications)
 
+Go to the Bot section and create a bot there. 
+ 
+When generating the application invite URL, enable the scopes
+  - bot
+    - Manage Roles
+  - applications.commands
+
+The generated URL should end with `permissions=268435456&scope=bot%20applications.commands`
 
 ## [Create Github OAuth2 application](https://github.com/settings/developers)
 

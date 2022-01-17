@@ -1,5 +1,6 @@
 app:
   base-url: http://localhost:8080
+  top-level-command: meldtest
 spring:
   data:
     mongodb:
