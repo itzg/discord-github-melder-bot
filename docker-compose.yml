@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:4
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:-devonly}
+      MONGO_INITDB_DATABASE: discord-github-melder
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo:/data/db
+      - ./compose/initdb:/docker-entrypoint-initdb.d
+volumes:
+  mongo: {}

@@ -1,0 +1,12 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+header {
+  text-align: center;
+}
+

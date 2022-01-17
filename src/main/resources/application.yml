@@ -1,0 +1,16 @@
+
+spring:
+  data:
+    mongodb:
+      database: discord-github-melder
+      auto-index-creation: true
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            scope:
+              - read:user
+logging:
+  group:
+    app: me.itzg.melderbot

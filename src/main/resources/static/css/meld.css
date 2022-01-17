@@ -1,0 +1,40 @@
+.discord-blurple {
+  color: #5865F2;
+}
+
+.github-black {
+  color: #151013;
+}
+
+.meld-results {
+  font-size: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.connection-row {
+  display: flex;
+}
+
+.logo {
+  font-size: 50px;
+}
+
+.logo-cell {
+  width: 10em;
+  text-align: center;
+}
+
+.cell-arrow {
+  padding: 0 10px;
+}
+
+.roles {
+  padding-top: 20px;
+  display: inline-block;
+}
+
+.repo {
+  margin-top: 5px;
+}
