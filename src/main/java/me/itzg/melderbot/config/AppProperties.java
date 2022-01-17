@@ -55,7 +55,4 @@ public class AppProperties {
      */
     String githubWebhookSecret;
 
-    Duration pendingContributionCheckInterval = Duration.ofMinutes(60);
-    Duration pendingContributionCheckInitialDelay = Duration.ofMinutes(1);
-    Duration pendingContributionTimeout = Duration.ofHours(48);
 }
