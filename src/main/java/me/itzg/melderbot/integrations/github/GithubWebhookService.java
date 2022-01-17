@@ -54,6 +54,7 @@ public class GithubWebhookService {
             .uri("/repos/{owner}/{repo}/hooks", parts[0], parts[1])
             .retrieve()
             .bodyToFlux(GithubWebhook.class)
+            .checkpoint("Get webhooks from "+repo)
             .filter(githubWebhook -> githubWebhook.config().url().trim().equals(webhookUrl))
             .doOnNext(webhook -> log.debug("Existing webhook={}", webhook))
             .hasElements()
@@ -72,7 +73,14 @@ public class GithubWebhookService {
                         .doOnNext(body -> log.warn("Client error: {}", body))
                         .then(clientResponse.createException()))
                 .toBodilessEntity()
-                .doOnNext(entity -> log.debug("Webhook created at={}", entity.getHeaders().getLocation())));
+                .checkpoint("Create webhook in "+repo)
+                .doOnNext(entity -> log.debug("Webhook created at={}", entity.getHeaders().getLocation())))
+            .onErrorResume(throwable -> {
+                log.warn("Failed to install webhook."
+                    + " If a 404 is reported, then check your access token."
+                    + " Message: {}", throwable.getMessage());
+                return Mono.empty();
+            });
     }
 
     private String buildWebhookUrl() {
