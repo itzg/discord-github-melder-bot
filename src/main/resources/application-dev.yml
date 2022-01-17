@@ -5,3 +5,4 @@ spring:
     mongodb:
       username: dev
       password: dev
+      host: localhost

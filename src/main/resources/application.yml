@@ -4,13 +4,19 @@ spring:
     mongodb:
       database: discord-github-melder
       auto-index-creation: true
+      host: ${mongo.host}
+      username: ${mongo.username}
+      password: ${mongo.password}
   security:
     oauth2:
       client:
         registration:
           github:
+            client-id: ${github.client-id}
+            client-secret: ${github.client-secret}
             scope:
               - read:user
+
 logging:
   group:
     app: me.itzg.melderbot
