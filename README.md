@@ -13,6 +13,8 @@ When generating the application invite URL, enable the scopes
 
 The generated URL should end with `permissions=268435456&scope=bot%20applications.commands`
 
+Add a role named "Contributor" to servers that the bot will join and **make sure the bot's role is higher than the "Contributor" role**.
+
 ## [Create Github OAuth2 application](https://github.com/settings/developers)
 
 - Generate a client secret
