@@ -36,14 +36,11 @@
   </div>
   <div class="roles">
       <#list rolesByStatus as status, role>
-         <#switch status>
-          <#case "ALREADY_ASSIGNED">
+          <#if status.name() == "ALREADY_ASSIGNED">
             You were already assigned ${role} role on all of the servers.
-              <#break >
-          <#case "ADDED_SOME_ASSIGNMENTS">
+          <#elseif status.name() == "ADDED_SOME_ASSIGNMENTS">
             You were assigned ${role} role on remaining servers.
-              <#break >
-          <#case "NO_ROLES_ASSIGNED">
+          <#elseif status.name() == "NO_ROLES_ASSIGNED">
             <div>
               You were not yet assigned ${role} role since you haven't contributed to the
               following repos:
@@ -53,8 +50,7 @@
                   <div class="repo"><a href="https://github.com/${repo}">${repo}</a></div>
                 </#list>
             </div>
-              <#break >
-        </#switch>
+          </#if>
       </#list>
   </div>
 </main>
