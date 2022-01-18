@@ -9,9 +9,5 @@
 
 <h1>Something happened on our side</h1>
 
-<div class="message">${message!""}</div>
-
-<div class="details">(Request ID: ${requestId}</div>
-
 </body>
 </html>
