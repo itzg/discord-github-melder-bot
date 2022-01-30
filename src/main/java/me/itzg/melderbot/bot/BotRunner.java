@@ -11,7 +11,6 @@ import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.service.ApplicationService;
 import java.io.Closeable;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import me.itzg.melderbot.config.AppProperties;
 import org.reactivestreams.Publisher;
@@ -25,7 +24,9 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class BotRunner implements ApplicationRunner, Closeable {
 
-    protected static final String LINK_WITH_GITHUB = "link-with-github";
+    protected static final String CMD_LINK_WITH_GITHUB = "link-with-github";
+    protected static final String CMD_STATUS = "status";
+
     private final AppProperties appProperties;
     private final DiscordClient discordClient;
     private final MeldLinkService meldLinkService;
@@ -43,7 +44,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
     }
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         botSubscription =
             registerCommands()
                 .then(
@@ -56,9 +57,9 @@ public class BotRunner implements ApplicationRunner, Closeable {
                                 return Mono.error(new IllegalArgumentException("Unknown command"));
                             }
                         })
-                        .onErrorContinue((throwable, appCommandEvent) -> {
-                            log.warn("Failed to process command interaction event={}", appCommandEvent, throwable);
-                        })
+                        .onErrorContinue((throwable, appCommandEvent) ->
+                            log.warn("Failed to process command interaction event={}", appCommandEvent, throwable)
+                        )
                         .then()
                 )
                 .subscribe();
@@ -76,14 +77,20 @@ public class BotRunner implements ApplicationRunner, Closeable {
                         .type(1)
                         .description("Melds Discord users with Github users")
                         .addOption(ApplicationCommandOptionData.builder()
-                            .name(LINK_WITH_GITHUB)
+                            .name(CMD_LINK_WITH_GITHUB)
                             .type(1)
                             .description("Links your Discord user to a Github user")
+                            .build())
+                        .addOption(ApplicationCommandOptionData.builder()
+                            .name(CMD_STATUS)
+                            .type(1)
+                            .description("Check your meld status")
                             .build())
                         .build()
                 )
                 .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData))
             ,
+            // remove any old commands
             applicationService.getGlobalApplicationCommands(appProperties.getDiscordApplicationId())
                 .flatMap(applicationCommandData -> {
                     if (!applicationCommandData.name().equals(topLevelCommand)) {
@@ -120,10 +127,43 @@ public class BotRunner implements ApplicationRunner, Closeable {
         }
 
         final ApplicationCommandInteractionOptionData subcommandOption = data.options().get().get(0);
-        if (subcommandOption.name().equals(LINK_WITH_GITHUB)) {
+        final String subcommandName = subcommandOption.name();
+        if (subcommandName.equals(CMD_LINK_WITH_GITHUB)) {
             return linkWithGithub(appCommandEvent);
+        } else if (subcommandName.equals(CMD_STATUS)) {
+            return checkStatus(appCommandEvent);
         } else {
             return Mono.error(() -> new IllegalArgumentException(String.format("Unknown subcommand: %s", data.name().get())));
+        }
+    }
+
+    private Mono<Void> checkStatus(ApplicationCommandInteractionEvent appCommandEvent) {
+        return meldLinkService.getMeldStatus(appCommandEvent.getInteraction().getUser())
+            .flatMap(meldStatus ->
+                appCommandEvent.reply()
+                    .withEphemeral(true)
+                    .withContent(contentForMeldStatus(meldStatus))
+            );
+    }
+
+    private String contentForMeldStatus(MeldStatus meldStatus) {
+        if (meldStatus == null) {
+            return "Unable to determine your status";
+        }
+
+        if (!meldStatus.githubLinked()) {
+            return String.format("You are not yet linked with your Github account. Use the %s subcommand to do that.",
+                CMD_LINK_WITH_GITHUB);
+        }
+
+        if (meldStatus.rolesAssigned().isEmpty()) {
+            return "Your Github account is linked, but no roles have been assigned.";
+        } else {
+            return String.format(
+                "Your Github account is linked and you have been assigned the role%s %s.",
+                meldStatus.rolesAssigned().size() > 1 ? "s" : "",
+                String.join(", ", meldStatus.rolesAssigned())
+            );
         }
     }
 
@@ -158,7 +198,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         if (botSubscription != null) {
             botSubscription.dispose();
         }

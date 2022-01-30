@@ -145,4 +145,9 @@ public class RoleHandlingService {
     private boolean hasEnoughContributions(Integer contributionsPerRepo) {
         return contributionsPerRepo >= appProperties.getMinimumContributionCount();
     }
+
+    public Flux<String> getRolesAssigned(Member member) {
+        return roleAssignmentRepository.findByMemberId(member.getId())
+            .map(roleAssignment -> appProperties.getRoleName().get(roleAssignment.roleType()));
+    }
 }

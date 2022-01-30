@@ -4,9 +4,11 @@ import discord4j.core.object.entity.User;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import me.itzg.melderbot.config.AppProperties;
 import me.itzg.melderbot.integrations.RoleHandlingService;
@@ -111,5 +113,19 @@ public class MeldLinkService {
                     .withGithubId(githubUser.id())
                     .withGithubUsername(githubUser.login())
             ));
+    }
+
+    public Mono<MeldStatus> getMeldStatus(User discordUser) {
+        return memberRepository.findByDiscordId(discordUser.getId().asString())
+            .filter(member -> member.getGithubId() != 0)
+            .flatMap(member ->
+                roleHandlingService.getRolesAssigned(member)
+                    .collect(Collectors.toSet())
+
+            )
+            .map(roles -> new MeldStatus(true, roles))
+            .switchIfEmpty(
+                Mono.defer(() -> Mono.just(new MeldStatus(false, Collections.emptySet())))
+            );
     }
 }
