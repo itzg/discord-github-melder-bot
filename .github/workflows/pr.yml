@@ -1,0 +1,25 @@
+name: Validate PR
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  validate:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Gradle build
+        uses: gradle/gradle-build-action@v2
+        id: gradleBuild
+        with:
+          gradle-version: wrapper
+          arguments: -q test

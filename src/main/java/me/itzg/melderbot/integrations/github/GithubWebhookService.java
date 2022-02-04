@@ -40,6 +40,13 @@ public class GithubWebhookService {
             Flux.fromIterable(appProperties.getGithubRepos())
                 .flatMap(
                     repo -> setupWebHooks(repo, githubAppWebClient.get()))
+                .onErrorResume(throwable -> {
+                    log.warn("Failed to install webhook."
+                        + " If a 404 is reported, then check your access token."
+                        + " Message: {}", throwable.getMessage());
+                    log.debug("Failed to install webhook, details: ", throwable);
+                    return Mono.empty();
+                })
                 .blockLast();
         }
     }
@@ -75,12 +82,7 @@ public class GithubWebhookService {
                 .toBodilessEntity()
                 .checkpoint("Create webhook in "+repo)
                 .doOnNext(entity -> log.debug("Webhook created at={}", entity.getHeaders().getLocation())))
-            .onErrorResume(throwable -> {
-                log.warn("Failed to install webhook."
-                    + " If a 404 is reported, then check your access token."
-                    + " Message: {}", throwable.getMessage());
-                return Mono.empty();
-            });
+            ;
     }
 
     private String buildWebhookUrl() {

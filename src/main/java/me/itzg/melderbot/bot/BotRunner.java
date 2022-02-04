@@ -1,6 +1,7 @@
 package me.itzg.melderbot.bot;
 
 import discord4j.core.DiscordClient;
+import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.interaction.ApplicationCommandInteractionEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
@@ -16,6 +17,7 @@ import me.itzg.melderbot.config.AppProperties;
 import org.reactivestreams.Publisher;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
@@ -31,25 +33,31 @@ public class BotRunner implements ApplicationRunner, Closeable {
     private final DiscordClient discordClient;
     private final MeldLinkService meldLinkService;
     private final String topLevelCommand;
+    private final ConfigurableApplicationContext applicationContext;
     private Disposable botSubscription;
 
     public BotRunner(AppProperties appProperties,
         DiscordClient discordClient,
-        MeldLinkService meldLinkService
+        MeldLinkService meldLinkService,
+        ConfigurableApplicationContext applicationContext
     ) {
         this.appProperties = appProperties;
         this.discordClient = discordClient;
         this.meldLinkService = meldLinkService;
         this.topLevelCommand = appProperties.getTopLevelCommand();
+        this.applicationContext = applicationContext;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         botSubscription =
             registerCommands()
+                .checkpoint("register commands")
                 .then(
                     discordClient.login()
+                        .checkpoint("login")
                         .flatMapMany(gateway -> gateway.on(ApplicationCommandInteractionEvent.class))
+                        .checkpoint("application command interaction event")
                         .switchMap(appCommandEvent -> {
                             if (appCommandEvent.getCommandName().equals(topLevelCommand)) {
                                 return handleMeld(appCommandEvent);
@@ -62,7 +70,10 @@ public class BotRunner implements ApplicationRunner, Closeable {
                         )
                         .then()
                 )
-                .subscribe();
+                .subscribe(null, throwable -> {
+                    log.error("BotRunner failed", throwable);
+                    applicationContext.close();
+                });
     }
 
     private Mono<?> registerCommands() {
@@ -169,12 +180,14 @@ public class BotRunner implements ApplicationRunner, Closeable {
 
     private Mono<Void> linkWithGithub(ApplicationCommandInteractionEvent appCommandEvent) {
         return Mono.justOrEmpty(appCommandEvent.getInteraction().getGuildId())
+            .checkpoint("lookup server ID")
             .flatMap(serverId ->
                 meldLinkService.handleMeldLink(
                     appCommandEvent.getInteraction().getUser(),
                     serverId.asString()
                 )
             )
+            .checkpoint("handle meld link")
             .flatMap(meldSetupResult -> {
                 if (meldSetupResult.needingMeld()) {
                     return appCommandEvent.reply()
