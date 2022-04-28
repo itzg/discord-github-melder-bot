@@ -1,12 +1,19 @@
+buildscript {
+    dependencies {
+        classpath('com.google.cloud.tools:jib-spring-boot-extension-gradle:0.1.0')
+    }
+}
+
 plugins {
     id 'org.springframework.boot' version '2.6.7'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
     id 'io.freefair.lombok' version '6.4.3'
+    // https://github.com/qoomon/gradle-git-versioning-plugin
+    id 'me.qoomon.git-versioning' version '5.1.1'
 }
 
 group = 'me.itzg'
-version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
 repositories {

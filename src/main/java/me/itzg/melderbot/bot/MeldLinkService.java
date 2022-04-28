@@ -116,7 +116,9 @@ public class MeldLinkService {
     }
 
     public Mono<MeldStatus> getMeldStatus(User discordUser) {
+        log.debug("Getting meld status for user={}", discordUser);
         return memberRepository.findByDiscordId(discordUser.getId().asString())
+            .doOnNext(member -> log.debug("Found member={} for user={}", member, discordUser))
             .filter(member -> member.getGithubId() != 0)
             .flatMap(member ->
                 roleHandlingService.getRolesAssigned(member)
@@ -126,6 +128,7 @@ public class MeldLinkService {
             .map(roles -> new MeldStatus(true, roles))
             .switchIfEmpty(
                 Mono.defer(() -> Mono.just(new MeldStatus(false, Collections.emptySet())))
+                    .doOnNext(meldStatus -> log.debug("Existing member not found for user={}", discordUser))
             );
     }
 }
