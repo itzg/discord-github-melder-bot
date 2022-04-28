@@ -148,6 +148,7 @@ public class RoleHandlingService {
 
     public Flux<String> getRolesAssigned(Member member) {
         return roleAssignmentRepository.findByMemberId(member.getId())
+            .doOnNext(roleAssignment -> log.debug("Found roleAssignment={} for member={}", roleAssignment, member))
             .map(roleAssignment -> appProperties.getRoleName().get(roleAssignment.roleType()));
     }
 }

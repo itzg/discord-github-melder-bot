@@ -12,6 +12,7 @@ import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.service.ApplicationService;
 import java.io.Closeable;
+import java.util.logging.Level;
 import lombok.extern.slf4j.Slf4j;
 import me.itzg.melderbot.config.AppProperties;
 import org.reactivestreams.Publisher;
@@ -150,6 +151,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
 
     private Mono<Void> checkStatus(ApplicationCommandInteractionEvent appCommandEvent) {
         return meldLinkService.getMeldStatus(appCommandEvent.getInteraction().getUser())
+            .doOnNext(meldStatus -> log.debug("meldStatus={}", meldStatus))
             .flatMap(meldStatus ->
                 appCommandEvent.reply()
                     .withEphemeral(true)
