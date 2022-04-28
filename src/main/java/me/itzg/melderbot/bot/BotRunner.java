@@ -79,44 +79,27 @@ public class BotRunner implements ApplicationRunner, Closeable {
 
     private Mono<?> registerCommands() {
         final ApplicationService applicationService = discordClient.getApplicationService();
-        return Mono.when(
-            applicationService
-                .createGlobalApplicationCommand(
-                    appProperties.getDiscordApplicationId(),
-                    ApplicationCommandRequest.builder()
-                        .name(topLevelCommand)
-                        // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types
+        return applicationService
+            .createGlobalApplicationCommand(
+                appProperties.getDiscordApplicationId(),
+                ApplicationCommandRequest.builder()
+                    .name(topLevelCommand)
+                    // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types
+                    .type(1)
+                    .description("Melds Discord users with Github users")
+                    .addOption(ApplicationCommandOptionData.builder()
+                        .name(CMD_LINK_WITH_GITHUB)
                         .type(1)
-                        .description("Melds Discord users with Github users")
-                        .addOption(ApplicationCommandOptionData.builder()
-                            .name(CMD_LINK_WITH_GITHUB)
-                            .type(1)
-                            .description("Links your Discord user to a Github user")
-                            .build())
-                        .addOption(ApplicationCommandOptionData.builder()
-                            .name(CMD_STATUS)
-                            .type(1)
-                            .description("Check your meld status")
-                            .build())
-                        .build()
-                )
-                .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData))
-            ,
-            // remove any old commands
-            applicationService.getGlobalApplicationCommands(appProperties.getDiscordApplicationId())
-                .flatMap(applicationCommandData -> {
-                    if (!applicationCommandData.name().equals(topLevelCommand)) {
-                        return applicationService.deleteGlobalApplicationCommand(
-                            appProperties.getDiscordApplicationId(),
-                            Long.parseLong(applicationCommandData.id())
-                        )
-                            .doOnNext(unused -> log.debug("Deleted old command: {}", applicationCommandData));
-                    } else {
-                        return Mono.empty();
-                    }
-                })
-                .then()
-        );
+                        .description("Links your Discord user to a Github user")
+                        .build())
+                    .addOption(ApplicationCommandOptionData.builder()
+                        .name(CMD_STATUS)
+                        .type(1)
+                        .description("Check your meld status")
+                        .build())
+                    .build()
+            )
+            .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData));
     }
 
     private Publisher<?> handleMeld(ApplicationCommandInteractionEvent appCommandEvent) {
@@ -156,7 +139,8 @@ public class BotRunner implements ApplicationRunner, Closeable {
                 appCommandEvent.reply()
                     .withEphemeral(true)
                     .withContent(contentForMeldStatus(meldStatus))
-            );
+            )
+            .log();
     }
 
     private String contentForMeldStatus(MeldStatus meldStatus) {
