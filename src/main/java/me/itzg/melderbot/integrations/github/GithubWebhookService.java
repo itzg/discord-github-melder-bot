@@ -42,9 +42,9 @@ public class GithubWebhookService {
                     repo -> setupWebHooks(repo, githubAppWebClient.get()))
                 .onErrorResume(throwable -> {
                     log.warn("Failed to install webhook."
-                        + " If a 404 is reported, then check your access token."
+                        + " If a 401 is reported, then check your access token."
                         + " Message: {}", throwable.getMessage());
-                    log.debug("Failed to install webhook, details: ", throwable);
+                    log.trace("Failed to install webhook, details: ", throwable);
                     return Mono.empty();
                 })
                 .blockLast();

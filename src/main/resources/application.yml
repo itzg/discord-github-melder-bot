@@ -19,4 +19,9 @@ spring:
 
 logging:
   group:
-    app: me.itzg.melderbot
+    app:
+      - me.itzg.melderbot
+    # https://docs.discord4j.com/logging/#available-loggers
+    discord4j:
+      - discord4j.rest.request
+      - discord4j.gateway

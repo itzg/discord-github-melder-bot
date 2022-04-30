@@ -1,7 +1,6 @@
 package me.itzg.melderbot.bot;
 
 import discord4j.core.DiscordClient;
-import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.interaction.ApplicationCommandInteractionEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
@@ -12,7 +11,6 @@ import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.service.ApplicationService;
 import java.io.Closeable;
-import java.util.logging.Level;
 import lombok.extern.slf4j.Slf4j;
 import me.itzg.melderbot.config.AppProperties;
 import org.reactivestreams.Publisher;
@@ -53,7 +51,6 @@ public class BotRunner implements ApplicationRunner, Closeable {
     public void run(ApplicationArguments args) {
         botSubscription =
             registerCommands()
-                .checkpoint("register commands")
                 .then(
                     discordClient.login()
                         .checkpoint("login")
@@ -61,7 +58,7 @@ public class BotRunner implements ApplicationRunner, Closeable {
                         .checkpoint("application command interaction event")
                         .switchMap(appCommandEvent -> {
                             if (appCommandEvent.getCommandName().equals(topLevelCommand)) {
-                                return handleMeld(appCommandEvent);
+                                return handleMeldCommands(appCommandEvent);
                             } else {
                                 return Mono.error(new IllegalArgumentException("Unknown command"));
                             }
@@ -99,10 +96,11 @@ public class BotRunner implements ApplicationRunner, Closeable {
                         .build())
                     .build()
             )
-            .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData));
+            .doOnNext(applicationCommandData -> log.debug("Registered command {}: {}", topLevelCommand, applicationCommandData))
+            .checkpoint("register commands");
     }
 
-    private Publisher<?> handleMeld(ApplicationCommandInteractionEvent appCommandEvent) {
+    private Publisher<?> handleMeldCommands(ApplicationCommandInteractionEvent appCommandEvent) {
         log.debug("Handling {} command from {}", topLevelCommand, appCommandEvent.getInteraction().getUser().getUsername());
 
         final Possible<ApplicationCommandInteractionData> possibleData = appCommandEvent.getInteraction()
@@ -134,7 +132,6 @@ public class BotRunner implements ApplicationRunner, Closeable {
 
     private Mono<Void> checkStatus(ApplicationCommandInteractionEvent appCommandEvent) {
         return meldLinkService.getMeldStatus(appCommandEvent.getInteraction().getUser())
-            .doOnNext(meldStatus -> log.debug("meldStatus={}", meldStatus))
             .flatMap(meldStatus ->
                 appCommandEvent.reply()
                     .withEphemeral(true)
@@ -173,7 +170,6 @@ public class BotRunner implements ApplicationRunner, Closeable {
                     serverId.asString()
                 )
             )
-            .checkpoint("handle meld link")
             .flatMap(meldSetupResult -> {
                 if (meldSetupResult.needingMeld()) {
                     return appCommandEvent.reply()

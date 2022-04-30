@@ -52,7 +52,8 @@ public class MeldLinkService {
                         .discordDiscriminator(discordUser.getDiscriminator())
                         .serverIds(Set.of(serverId))
                         .build()
-                )))
+                ))
+            )
             .flatMap(member -> {
                 final Mono<Member> updateMember;
                 if (!member.getServerIds().contains(serverId)) {
@@ -76,7 +77,8 @@ public class MeldLinkService {
                         .flatMap(roleHandlingService::processInitialRoleAssignments)
                         .then(Mono.just(MeldSetupResult.noMeldNeeded()));
                 }
-            });
+            })
+            .checkpoint("handle meld link");
     }
 
     private String generateMeldUrlWithCode(String code) {
@@ -129,6 +131,8 @@ public class MeldLinkService {
             .switchIfEmpty(
                 Mono.defer(() -> Mono.just(new MeldStatus(false, Collections.emptySet())))
                     .doOnNext(meldStatus -> log.debug("Existing member not found for user={}", discordUser))
-            );
+            )
+            .doOnNext(meldStatus -> log.debug("Resolved meldStatus={}", meldStatus))
+            .checkpoint("getMeldStatus");
     }
 }
