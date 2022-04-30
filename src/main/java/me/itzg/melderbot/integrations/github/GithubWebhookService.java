@@ -40,13 +40,6 @@ public class GithubWebhookService {
             Flux.fromIterable(appProperties.getGithubRepos())
                 .flatMap(
                     repo -> setupWebHooks(repo, githubAppWebClient.get()))
-                .onErrorResume(throwable -> {
-                    log.warn("Failed to install webhook."
-                        + " If a 401 is reported, then check your access token."
-                        + " Message: {}", throwable.getMessage());
-                    log.trace("Failed to install webhook, details: ", throwable);
-                    return Mono.empty();
-                })
                 .blockLast();
         }
     }
@@ -61,28 +54,33 @@ public class GithubWebhookService {
             .uri("/repos/{owner}/{repo}/hooks", parts[0], parts[1])
             .retrieve()
             .bodyToFlux(GithubWebhook.class)
-            .checkpoint("Get webhooks from "+repo)
+            .checkpoint("Get webhooks from " + repo)
             .filter(githubWebhook -> githubWebhook.config().url().trim().equals(webhookUrl))
             .doOnNext(webhook -> log.debug("Existing webhook={}", webhook))
             .hasElements()
             .flatMap(exists -> exists ? Mono.empty() :
                 webClient.post()
-                .uri("/repos/{owner}/{repo}/hooks", parts[0], parts[1])
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(GithubWebhook.create(
-                    webhookUrl,
-                    appProperties.getGithubWebhookSecret(),
-                    List.of("issues", "pull_request", "discussion")
-                ))
-                .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, clientResponse ->
-                    clientResponse.bodyToMono(String.class)
-                        .doOnNext(body -> log.warn("Client error: {}", body))
-                        .then(clientResponse.createException()))
-                .toBodilessEntity()
-                .checkpoint("Create webhook in "+repo)
-                .doOnNext(entity -> log.debug("Webhook created at={}", entity.getHeaders().getLocation())))
-            ;
+                    .uri("/repos/{owner}/{repo}/hooks", parts[0], parts[1])
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(GithubWebhook.create(
+                        webhookUrl,
+                        appProperties.getGithubWebhookSecret(),
+                        List.of("issues", "pull_request", "discussion")
+                    ))
+                    .retrieve()
+                    .onStatus(HttpStatus::is4xxClientError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                            .doOnNext(body -> log.error("Client error: {}", body))
+                            .then(clientResponse.createException()))
+                    .toBodilessEntity()
+                    .checkpoint("Create webhook in " + repo)
+                    .doOnNext(entity -> log.debug("Webhook created at={}", entity.getHeaders().getLocation())))
+            .onErrorResume(throwable -> {
+                log.warn("Failed to install webhook."
+                    + " If a 401 is reported, then check your access token."
+                    + " Message: {}", throwable.getMessage());
+                return Mono.empty();
+            });
     }
 
     private String buildWebhookUrl() {
