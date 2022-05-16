@@ -10,7 +10,7 @@ plugins {
     id 'java'
     id 'io.freefair.lombok' version '6.4.3'
     // https://github.com/qoomon/gradle-git-versioning-plugin
-    id 'me.qoomon.git-versioning' version '6.1.0'
+    id 'me.qoomon.git-versioning' version '6.1.1'
 }
 
 group = 'me.itzg'
