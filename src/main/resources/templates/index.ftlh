@@ -18,7 +18,7 @@
       <p>
         <a target="_blank" href="https://github.com/itzg/discord-github-melder-bot#installation">
           Follow these instructions</a>
-        to run this bot to your own Discord servers.
+        to run this bot on your own Discord servers.
       </p>
       <p>
         <a href="https://github.com/itzg/discord-github-melder-bot/issues" target="_blank">
