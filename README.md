@@ -49,7 +49,7 @@ db.createUser({
 
 ### Image
 
-[`itzg/discord-github-melder-bot:{tag}`](https://hub.docker.com/r/itzg/discord-github-melder-bot)
+[`ghcr.io/itzg/discord-github-melder-bot:{tag}`](https://github.com/itzg/discord-github-melder-bot/pkgs/container/discord-github-melder-bot)
 
 ### Ports
 
