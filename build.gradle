@@ -23,10 +23,6 @@ gitVersioning.apply {
             version = '${ref}-SNAPSHOT'
         }
     }
-    // fallback, pre-tags
-    rev {
-        version = '${commit}'
-    }
 }
 
 java {
