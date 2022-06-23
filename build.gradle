@@ -13,14 +13,14 @@ group = 'me.itzg'
 version = '0.0.1-SNAPSHOT'
 gitVersioning.apply {
     refs {
-        tag('.+') {
-            version = '${ref}'
-        }
         branch('main') {
             version = '${describe.tag}-SNAPSHOT'
         }
         branch('.+') {
             version = '${ref}-SNAPSHOT'
+        }
+        tag('.+') {
+            version = '${ref}'
         }
     }
 }
