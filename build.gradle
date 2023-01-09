@@ -6,7 +6,7 @@ plugins {
     id 'io.freefair.lombok' version '6.6.1'
     // https://github.com/qoomon/gradle-git-versioning-plugin
     id 'me.qoomon.git-versioning' version '6.3.7'
-    id "io.github.itzg.simple-boot-image" version "0.5.2"
+    id "io.github.itzg.simple-boot-image" version "3.0.0"
 }
 
 group = 'me.itzg'
