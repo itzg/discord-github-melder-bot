@@ -1,13 +1,13 @@
 package me.itzg.melderbot.config;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -51,8 +51,8 @@ public class AppProperties {
     String githubAccessToken;
 
     /**
-     * When set, webhook calls will be verified using the HMAC SHA256 described here
-     * https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
+     * When set, webhook calls will be verified using the HMAC SHA256 described
+     * <a href="https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks">here</a>
      */
     String githubWebhookSecret;
 
