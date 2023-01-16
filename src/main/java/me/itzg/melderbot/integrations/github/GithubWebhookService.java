@@ -5,13 +5,11 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import me.itzg.melderbot.config.AppProperties;
 import me.itzg.melderbot.integrations.github.model.GithubWebhook;
-import me.itzg.melderbot.integrations.github.model.WebhookConfig;
-import me.itzg.melderbot.integrations.github.model.WebhookContentType;
 import me.itzg.melderbot.web.WebhookController;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -68,7 +66,7 @@ public class GithubWebhookService {
                         List.of("issues", "pull_request", "discussion")
                     ))
                     .retrieve()
-                    .onStatus(HttpStatus::is4xxClientError, clientResponse ->
+                    .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
                         clientResponse.bodyToMono(String.class)
                             .doOnNext(body -> log.error("Client error: {}", body))
                             .then(clientResponse.createException()))
