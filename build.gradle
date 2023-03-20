@@ -42,7 +42,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-freemarker'
 
-    implementation 'com.discord4j:discord4j-core:3.2.3'
+    implementation 'com.discord4j:discord4j-core:3.2.4'
     implementation 'org.webjars:font-awesome:5.15.4'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
